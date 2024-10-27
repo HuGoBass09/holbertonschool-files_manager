@@ -63,4 +63,4 @@ class DBClient {
 }
 
 // Create and export an instance of DBClient
-module.exports = new DBClient();
+export default DBClient;

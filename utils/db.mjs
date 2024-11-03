@@ -7,34 +7,34 @@ const url = `mongodb://${DB_HOST}:${DB_PORT}`;
 
 class DBClient {
   constructor() {
-    this.db = null;
-    this.client = new MongoClient(url, { useUnifiedTopology: true });
-    this.connect();
+    this.db = new Promise((resolve) => {
+      const client = new MongoClient(url, { useUnifiedTopology: true });
+      client.connect((err) => {
+        if (err) {
+          console.error('Failed to connect to MongoDB:', err);
+          resolve(null); // Set to null on failure
+        } else {
+          console.log('Database connected successfully');
+          resolve(client.db(DB_DATABASE)); // Resolve with the database instance
+        }
+      });
+    });
   }
 
-  async connect() {
-    try {
-      const client = await this.client.connect();
-      this.db = client.db(DB_DATABASE);
-      console.log('Database connected successfully');
-    } catch (err) {
-      console.error('Failed to connect to MongoDB:', err);
-      this.db = null;
-    }
-  }
-
-  isAlive() {
-    return this.db !== null;
+  async isAlive() {
+    return (await this.db) !== null;
   }
 
   async nbUsers() {
-    if (!this.db) throw new Error('Database connection not established');
-    return this.db.collection('users').countDocuments();
+    const db = await this.db;
+    if (!db) throw new Error('Database connection not established');
+    return db.collection('users').countDocuments();
   }
 
   async nbFiles() {
-    if (!this.db) throw new Error('Database connection not established');
-    return this.db.collection('files').countDocuments();
+    const db = await this.db;
+    if (!db) throw new Error('Database connection not established');
+    return db.collection('files').countDocuments();
   }
 }
 
